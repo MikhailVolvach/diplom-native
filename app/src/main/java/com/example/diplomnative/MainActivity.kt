@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import com.example.diplomnative.ui.screens.HistoryScreen
 import com.example.diplomnative.ui.screens.HomeScreen
+import com.example.diplomnative.ui.screens.TransferScreen
 import com.example.diplomnative.ui.theme.DiplomNativeTheme
 
 class MainActivity : ComponentActivity() {
@@ -55,7 +58,8 @@ fun DiplomNativeApp() {
                     onClick = { currentDestination = it }
                 )
             }
-        }
+        },
+
     ) {
 //        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 //            Greeting(
@@ -65,18 +69,18 @@ fun DiplomNativeApp() {
 //        }
         when (currentDestination) {
             AppDestinations.HOME -> HomeScreen()
-            AppDestinations.PROFILE -> Text("Profile Screen")
+            AppDestinations.TRANSFER -> TransferScreen()
             AppDestinations.HISTORY -> HistoryScreen()
         }
     }
 }
 
 enum class AppDestinations(
-    val label: String,
+    val label: String = "",
     val icon: ImageVector,
 ) {
-    HOME("Home", Icons.Default.Home),
-    PROFILE("Profile", Icons.Default.AccountBox),
+    HOME(icon=Icons.Default.Home),
+    TRANSFER("Transfer", Icons.AutoMirrored.Default.Send),
     HISTORY("History", Icons.AutoMirrored.Filled.List),
 }
 

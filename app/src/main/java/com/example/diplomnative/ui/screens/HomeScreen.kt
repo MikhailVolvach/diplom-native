@@ -1,7 +1,12 @@
 package com.example.diplomnative.ui.screens
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -10,14 +15,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.diplomnative.ui.theme.DiplomNativeTheme
+import kotlinx.coroutines.delay
+import kotlin.concurrent.timer
+import androidx.compose.runtime.setValue // Add this line
 
 // Моковые данные
 data class BankCard(val id: String, val name: String, val balance: String, val color: Color)
@@ -46,17 +60,19 @@ val mockTips = listOf(
 fun HomeScreen(modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = {
-            GreetingSection()
-        }
+//        topBar = {
+//            GreetingSection()
+//        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
+//            contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            item { GreetingSection() }
             item { BalanceSection(mockCards) }
             item { AdsSection(mockAds) }
             item { TipsSection(mockTips) }
@@ -66,27 +82,34 @@ fun HomeScreen(modifier: Modifier = Modifier) {
 
 @Composable
 fun GreetingSection() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = MaterialTheme.colorScheme.primary,
+        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
+        modifier = Modifier.fillMaxWidth()
     ) {
-        Column {
-            Text(
-                text = "Привет, Михаил!",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "Рады видеть вас снова",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.outline
-            )
-        }
-        IconButton(onClick = { /* TODO: Уведомления */ }) {
-            Icon(Icons.Default.Notifications, contentDescription = "Уведомления")
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Привет, Михаил!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+                Text(
+                    text = "Рады видеть вас снова",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
+            IconButton(onClick = { /* TODO: Уведомления */ }) {
+                Icon(Icons.Default.Notifications, contentDescription = "Уведомления")
+            }
         }
     }
 }
@@ -97,9 +120,11 @@ fun BalanceSection(cards: List<BankCard>) {
         Text(
             text = "Ваши счета",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
         LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(cards) { card ->
@@ -111,10 +136,24 @@ fun BalanceSection(cards: List<BankCard>) {
 
 @Composable
 fun CardItem(card: BankCard) {
+    var isBalanceVisible by remember { mutableStateOf(false) }
+    var timerKey by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(timerKey) {
+        if (isBalanceVisible) {
+            delay(5000)
+            isBalanceVisible = false
+        }
+    }
+
     Card(
         modifier = Modifier
             .width(280.dp)
-            .height(160.dp),
+            .height(160.dp)
+            .clickable {
+                isBalanceVisible = true
+                timerKey++
+            },
         colors = CardDefaults.cardColors(containerColor = card.color)
     ) {
         Column(
@@ -128,15 +167,47 @@ fun CardItem(card: BankCard) {
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(
-                text = card.balance,
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+
+            Box(contentAlignment = Alignment.CenterStart) {
+                Text(
+                    text = card.balance,
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.alpha(if (isBalanceVisible) 1f else 0f)
+                )
+                if (!isBalanceVisible) {
+                    ParticleSpoiler(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .padding(vertical = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ParticleSpoiler(modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        val random = java.util.Random(42) // Фиксированный seed для стабильности частиц
+        val particleCount = 200
+        repeat(particleCount) {
+            drawCircle(
+                color = Color.White.copy(alpha = random.nextFloat() * 0.5f + 0.2f),
+                radius = (1..3).random(random).dp.toPx(),
+                center = androidx.compose.ui.geometry.Offset(
+                    x = random.nextFloat() * size.width,
+                    y = random.nextFloat() * size.height
+                )
             )
         }
     }
 }
+
+fun IntRange.random(random: java.util.Random): Int =
+    start + random.nextInt(endInclusive - start + 1)
 
 @Composable
 fun AdsSection(ads: List<AdBanner>) {
@@ -144,9 +215,11 @@ fun AdsSection(ads: List<AdBanner>) {
         Text(
             text = "Спецпредложения",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
         LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(ads) { ad ->
@@ -182,15 +255,22 @@ fun AdItem(ad: AdBanner) {
 
 @Composable
 fun TipsSection(tips: List<Tip>) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(horizontal = 16.dp)
+    ) {
         Text(
             text = "Советы дня",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+
         )
-        tips.forEach { tip ->
-            TipItem(tip)
-            Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            tips.forEach { tip ->
+                TipItem(tip)
+            }
         }
     }
 }
