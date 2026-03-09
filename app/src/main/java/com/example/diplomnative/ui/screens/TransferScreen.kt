@@ -1,14 +1,19 @@
 package com.example.diplomnative.ui.screens
 
+import androidx.compose.animation.core.copy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -17,6 +22,10 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.diplomnative.ui.theme.BankGreen
+import com.example.diplomnative.ui.theme.BankOnBackgroundText
+import com.example.diplomnative.ui.theme.BankOnContainerText
+import com.example.diplomnative.ui.theme.BankScreenBackground
 import com.example.diplomnative.ui.theme.DiplomNativeTheme
 
 enum class TransferType {
@@ -57,50 +66,61 @@ fun TransferScreen(onBack: () -> Unit = {}) {
         TransferType.ACCOUNT -> AccountNumberVisualTransformation()
     }
 
-    Scaffold(
+    // Настройка цветов для текстовых полей
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = BankGreen,
+        unfocusedBorderColor = BankGreen.copy(alpha = 0.3f),
+        focusedLabelColor = BankGreen,
+        cursorColor = BankGreen,
+        focusedTextColor = BankOnBackgroundText,
+        unfocusedTextColor = BankOnBackgroundText
+    )
 
+    Scaffold(
+        containerColor = BankScreenBackground // Устанавливаем фон экрана
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(24.dp), // Чуть больше отступы для "воздуха"
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Text(
-                text = "Выберите тип перевода",
-                style = MaterialTheme.typography.titleMedium,
+                text = "Перевод средств",
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.surface
+                color = BankOnBackgroundText
             )
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    selected = transferType == TransferType.CARD,
-                    onClick = { transferType = TransferType.CARD },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
-                    colors = SegmentedButtonDefaults.colors(
-//                        inactiveContainerColor =
-                    )
-                ) {
-                    Text("Карта", color = MaterialTheme.colorScheme.surface)
-                }
-                SegmentedButton(
-                    selected = transferType == TransferType.PHONE,
-                    onClick = { transferType = TransferType.PHONE },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
-                ) {
-                    Text("Телефон", color = MaterialTheme.colorScheme.surface)
-                }
-                SegmentedButton(
-                    selected = transferType == TransferType.ACCOUNT,
-                    onClick = { transferType = TransferType.ACCOUNT },
-                    shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
-                ) {
-                    Text("Счет", color = MaterialTheme.colorScheme.surface)
+            // Стилизованный переключатель
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val types = listOf(
+                    TransferType.CARD to "Карта",
+                    TransferType.PHONE to "Телефон",
+                    TransferType.ACCOUNT to "Счет"
+                )
+
+                types.forEachIndexed { index, (type, label) ->
+                    SegmentedButton(
+                        selected = transferType == type,
+                        onClick = { transferType = type },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 3),
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = BankGreen,
+                            activeContentColor = Color.White,
+                            inactiveContainerColor = Color.Transparent,
+                            inactiveContentColor = BankGreen
+                        )
+                    ) {
+                        Text(label, style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             }
 
+            // Поле ввода получателя
             OutlinedTextField(
                 value = recipient,
                 onValueChange = {
@@ -108,50 +128,65 @@ fun TransferScreen(onBack: () -> Unit = {}) {
                         recipient = it
                     }
                 },
-                label = {
-                    Text(
-                        when (transferType) {
-                            TransferType.CARD -> "Номер карты"
-                            TransferType.PHONE -> "Номер телефона"
-                            TransferType.ACCOUNT -> "Номер счета"
-                        }
-                    )
-                },
-                placeholder = if (isFocused) {
-                    { Text(recipientPlaceholder) }
-                } else null,
+                label = { Text(when (transferType) {
+                    TransferType.CARD -> "Номер карты"
+                    TransferType.PHONE -> "Номер телефона"
+                    TransferType.ACCOUNT -> "Номер счета"
+                }) },
+                placeholder = if (isFocused) { { Text(recipientPlaceholder) } } else null,
                 visualTransformation = visualTransformation,
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                interactionSource = interactionSource
+                interactionSource = interactionSource,
+                colors = textFieldColors,
+                shape = RoundedCornerShape(16.dp)
             )
 
+            // Поле ввода суммы
             OutlinedTextField(
                 value = amount,
                 onValueChange = { amount = it },
                 label = { Text("Сумма перевода") },
-                suffix = { Text("₽") },
+                suffix = { Text("₽", fontWeight = FontWeight.Bold) },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                colors = textFieldColors,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
             )
 
+            // Поле комментария
             OutlinedTextField(
                 value = comment,
                 onValueChange = { comment = it },
-                label = { Text("Комментарий (необязательно)") },
-                modifier = Modifier.fillMaxWidth()
+                label = { Text("Комментарий (опционально)") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = textFieldColors,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // Главная кнопка перевода
             Button(
-                onClick = { /* TODO: Выполнить перевод */ },
+                onClick = { /* Выполнить перевод */ },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = recipient.length == recipientMaxLength && amount.isNotBlank()
+                enabled = recipient.length == recipientMaxLength && amount.isNotBlank(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BankGreen,
+                    contentColor = Color.White,
+                    disabledContainerColor = BankGreen.copy(alpha = 0.3f),
+                    disabledContentColor = Color.White.copy(alpha = 0.5f)
+                )
             ) {
-                Text("Перевести", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Отправить перевод",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

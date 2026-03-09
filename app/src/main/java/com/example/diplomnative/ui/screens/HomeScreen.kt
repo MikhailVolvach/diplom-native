@@ -32,6 +32,17 @@ import com.example.diplomnative.ui.theme.DiplomNativeTheme
 import kotlinx.coroutines.delay
 import kotlin.concurrent.timer
 import androidx.compose.runtime.setValue // Add this line
+import com.example.diplomnative.ui.theme.AdCreditBg
+import com.example.diplomnative.ui.theme.AdInvestBg
+import com.example.diplomnative.ui.theme.AdMortgageBg
+import com.example.diplomnative.ui.theme.BankOnContainerText
+import com.example.diplomnative.ui.theme.CardGraphite
+import com.example.diplomnative.ui.theme.CardRuby
+import com.example.diplomnative.ui.theme.CardSapphire
+import com.example.diplomnative.ui.theme.OnAdCredit
+import com.example.diplomnative.ui.theme.OnAdInvest
+import com.example.diplomnative.ui.theme.OnAdMortgage
+import com.example.diplomnative.ui.widgets.GreetingSection
 
 // Моковые данные
 data class BankCard(val id: String, val name: String, val balance: String, val color: Color)
@@ -39,15 +50,15 @@ data class AdBanner(val title: String, val description: String, val color: Color
 data class Tip(val title: String, val description: String)
 
 val mockCards = listOf(
-    BankCard("1", "Основная карта", "45 200,00 ₽", Color(0xFF1A237E)),
-    BankCard("2", "Сберегательный", "150 000,50 ₽", Color(0xFF2E7D32)),
-    BankCard("3", "Кредитка", "10 000,00 ₽", Color(0xFFB71C1C))
+    BankCard("1", "Зарплатная", "45 200,00 ₽", CardRuby),
+    BankCard("2", "Сберегательный", "150 000,50 ₽", CardSapphire),
+    BankCard("3", "Кредитная", "10 000,00 ₽", CardGraphite)
 )
 
 val mockAds = listOf(
-    AdBanner("Кредит наличными", "От 5.5% годовых", Color(0xFFBBDEFB)),
-    AdBanner("Ипотека", "Ставка от 4.7%", Color(0xFFC8E6C9)),
-    AdBanner("Инвестиции", "Начните с 1000₽", Color(0xFFFFF9C4))
+    AdBanner("Кредит наличными", "От 5.5% годовых", AdCreditBg),
+    AdBanner("Ипотека", "Ставка от 4.7%", AdMortgageBg),
+    AdBanner("Инвестиции", "Начните с 1000₽", AdInvestBg)
 )
 
 val mockTips = listOf(
@@ -60,56 +71,16 @@ val mockTips = listOf(
 fun HomeScreen(modifier: Modifier = Modifier) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-//        topBar = {
-//            GreetingSection()
-//        },
-        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-//            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { GreetingSection() }
             item { BalanceSection(mockCards) }
             item { AdsSection(mockAds) }
             item { TipsSection(mockTips) }
-        }
-    }
-}
-
-@Composable
-fun GreetingSection() {
-    Surface(
-        color = MaterialTheme.colorScheme.primary,
-        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Привет, Михаил!",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                )
-                Text(
-                    text = "Рады видеть вас снова",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.7f)
-                )
-            }
-            IconButton(onClick = { /* TODO: Уведомления */ }) {
-                Icon(Icons.Default.Notifications, contentDescription = "Уведомления")
-            }
         }
     }
 }
@@ -119,9 +90,10 @@ fun BalanceSection(cards: List<BankCard>) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = "Ваши счета",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = BankOnContainerText
         )
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
@@ -214,9 +186,10 @@ fun AdsSection(ads: List<AdBanner>) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = "Спецпредложения",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge, // Увеличил шрифт для иерархии
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = BankOnContainerText // Наш темный цвет текста
         )
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
@@ -231,23 +204,35 @@ fun AdsSection(ads: List<AdBanner>) {
 
 @Composable
 fun AdItem(ad: AdBanner) {
+    // Определяем цвет текста в зависимости от фона (можно сделать умнее, но пока вручную)
+    val contentColor = when (ad.color) {
+        AdCreditBg -> OnAdCredit
+        AdMortgageBg -> OnAdMortgage
+        AdInvestBg -> OnAdInvest
+        else -> Color.Black
+    }
+
     Box(
         modifier = Modifier
-            .width(200.dp)
+            .width(200.dp) // Чуть шире для лучшей читаемости
             .height(100.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(ad.color)
+            .clickable { /* Действие */ }
             .padding(16.dp)
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxHeight()) {
             Text(
                 text = ad.title,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyLarge
+                fontWeight = FontWeight.ExtraBold,
+                style = MaterialTheme.typography.bodyLarge,
+                color = contentColor
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = ad.description,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodyMedium,
+                color = contentColor.copy(alpha = 0.8f)
             )
         }
     }
@@ -261,9 +246,8 @@ fun TipsSection(tips: List<Tip>) {
     ) {
         Text(
             text = "Советы дня",
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-
         )
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)

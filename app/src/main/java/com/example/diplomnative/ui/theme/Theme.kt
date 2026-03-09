@@ -20,19 +20,20 @@ private val DarkColorScheme = darkColorScheme(
     surface = BankDarkBackground,
     onPrimary = Color.White,
     onBackground = Color.White,
-    onSurface = Color.White
+    onSurface = Color.White,
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = BankGreen,
-//    secondary = BankGreen70,
-    secondary = PurpleGrey40,
+    secondary = BankGreen70,
+//    secondary = PurpleGrey40,
     tertiary = Pink40,
-    background = Color.White, // Или BankBackground, если нужен светло-серый
+//    background = Color.White, // Или BankBackground, если нужен светло-серый
+    background = BankGreen,
     surface = Color.White,
     onPrimary = Color.White,
     onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F)
+    onSurface = Color(0xFF1C1B1F),
 )
 
 @Composable
