@@ -26,7 +26,6 @@ import com.example.diplomnative.ui.theme.BankOnBackgroundText
 fun GreetingSection() {
     Surface(
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0f),
-//        shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
