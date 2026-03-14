@@ -1,6 +1,7 @@
 package com.example.diplomnative
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -33,6 +34,7 @@ import com.example.diplomnative.ui.screens.TransferScreen
 import com.example.diplomnative.ui.theme.*
 import com.example.diplomnative.ui.viewmodel.BankViewModel
 import com.example.diplomnative.ui.widgets.GreetingSection
+import kotlinx.coroutines.flow.collectLatest
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,34 +45,23 @@ class MainActivity : ComponentActivity() {
             val app = context.applicationContext as BankApplication
             
             val bankViewModel: BankViewModel = viewModel(
-//                factory = object : ViewModelProvider.Factory {
-//                    @Suppress("UNCHECKED_CAST")
-//                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-//                        if (modelClass.isAssignableFrom(BankViewModel::class.java)) {
-//                            return BankViewModel(app.repository) as T
-//                        }
-//                        throw IllegalArgumentException("Unknown ViewModel class")
-//                    }
-//                }
-//                factory = viewModelFactory {
-//                    initializer {
-//                        BankViewModel(app.repository)
-//                    }
-//                }
                 factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                        print(app.repository);
                         return BankViewModel(app.repository) as T
                     }
                 }
             )
 
-//             Инициализация данных при первом запуске
+            // Подписка на тосты из ViewModel
+            LaunchedEffect(Unit) {
+                bankViewModel.toastEvent.collectLatest { message ->
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            // Инициализация данных при первом запуске
             val cards by bankViewModel.allCards.collectAsState()
             LaunchedEffect(cards) {
-                print(cards)
-                print("cardsIsEmpty?")
-                print(cards.isEmpty())
                 if (cards.isEmpty()) {
                     bankViewModel.initMockData(
                         listOf(
@@ -136,7 +127,7 @@ fun DiplomNativeApp(viewModel: BankViewModel) {
                 }
             }
         }
-        }
+    }
 }
 
 enum class AppDestinations(

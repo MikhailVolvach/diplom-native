@@ -6,8 +6,11 @@ import com.example.diplomnative.data.BankCardEntity
 import com.example.diplomnative.data.BankRepository
 import com.example.diplomnative.data.NotificationEntity
 import com.example.diplomnative.data.TransactionEntity
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -21,6 +24,9 @@ class BankViewModel(private val repository: BankRepository) : ViewModel() {
 
     val allNotifications: StateFlow<List<NotificationEntity>> = repository.allNotifications
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val _toastEvent = MutableSharedFlow<String>()
+    val toastEvent: SharedFlow<String> = _toastEvent.asSharedFlow()
 
     fun performTransfer(
         fromCard: BankCardEntity,
@@ -43,30 +49,28 @@ class BankViewModel(private val repository: BankRepository) : ViewModel() {
             )
             repository.insertTransaction(transaction)
 
+            val message = "Перевод на сумму $amount ₽ выполнен успешно"
             // Генерируем уведомление о списании
             repository.insertNotification(
                 NotificationEntity(
                     title = "Списание",
-                    message = "Перевод на сумму $amount ₽ выполнен успешно",
+                    message = message,
                     date = System.currentTimeMillis()
                 )
             )
+            
+            // Отправляем событие для тоста
+            _toastEvent.emit(message)
         }
     }
 
     fun initMockData(cards: List<BankCardEntity>) {
         viewModelScope.launch {
-            var count = 0;
-            try {
-                count = repository.getCardsCount()
-            } catch (e: Exception) {
-                println("Caught exception: ${e.message}")
-            }
-
+            val count = repository.getCardsCount()
             if (count == 0) {
                 repository.insertInitialCards(cards)
                 
-//                 Приветственное уведомление
+                // Приветственное уведомление
                 repository.insertNotification(
                     NotificationEntity(
                         title = "Добро пожаловать!",
