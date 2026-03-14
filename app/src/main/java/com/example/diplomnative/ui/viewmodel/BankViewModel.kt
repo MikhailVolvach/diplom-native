@@ -25,11 +25,11 @@ class BankViewModel(private val repository: BankRepository) : ViewModel() {
         category: String = "Переводы"
     ) {
         viewModelScope.launch {
-            // 1. Обновляем баланс карты
+            // 1. Обновляем баланс в объекте и БД
             val updatedCard = fromCard.copy(balance = fromCard.balance - amount)
             repository.updateCard(updatedCard)
 
-            // 2. Добавляем запись в историю
+            // 2. Создаем запись в истории
             val transaction = TransactionEntity(
                 cardId = fromCard.id,
                 title = "Перевод $recipient",
@@ -37,16 +37,27 @@ class BankViewModel(private val repository: BankRepository) : ViewModel() {
                 amount = amount,
                 date = System.currentTimeMillis(),
                 isIncome = false,
-                iconName = "Send" // Имя иконки для маппинга
+                iconName = "Send"
             )
             repository.insertTransaction(transaction)
         }
     }
 
-    // Метод для инициализации данных (если база пуста)
+    // Инициализация только если база действительно пуста
     fun initMockData(cards: List<BankCardEntity>) {
         viewModelScope.launch {
-            repository.insertInitialCards(cards)
+            val count = repository.getCardsCount()
+            if (count == 0) {
+                repository.insertInitialCards(cards)
+            }
+        }
+    }
+    
+    // Метод для ручной очистки (если нужно сбросить состояние)
+    fun resetDatabase() {
+        viewModelScope.launch {
+            repository.deleteAllCards()
+            // Здесь можно также добавить удаление транзакций, если нужно
         }
     }
 }
