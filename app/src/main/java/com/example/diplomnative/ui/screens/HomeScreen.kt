@@ -4,22 +4,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,32 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.diplomnative.ui.theme.DiplomNativeTheme
+import com.example.diplomnative.ui.theme.*
+import com.example.diplomnative.ui.viewmodel.BankViewModel
 import kotlinx.coroutines.delay
-import kotlin.concurrent.timer
-import androidx.compose.runtime.setValue // Add this line
-import com.example.diplomnative.ui.theme.AdCreditBg
-import com.example.diplomnative.ui.theme.AdInvestBg
-import com.example.diplomnative.ui.theme.AdMortgageBg
-import com.example.diplomnative.ui.theme.BankOnContainerText
-import com.example.diplomnative.ui.theme.CardGraphite
-import com.example.diplomnative.ui.theme.CardRuby
-import com.example.diplomnative.ui.theme.CardSapphire
-import com.example.diplomnative.ui.theme.OnAdCredit
-import com.example.diplomnative.ui.theme.OnAdInvest
-import com.example.diplomnative.ui.theme.OnAdMortgage
-import com.example.diplomnative.ui.widgets.GreetingSection
+import java.text.DecimalFormat
 
-// Моковые данные
+// UI модели (оставляем для обратной совместимости или маппинга)
 data class BankCard(val id: String, val name: String, val balance: String, val color: Color)
 data class AdBanner(val title: String, val description: String, val color: Color)
 data class Tip(val title: String, val description: String)
-
-val mockCards = listOf(
-    BankCard("1", "Зарплатная", "45 200,00 ₽", CardRuby),
-    BankCard("2", "Сберегательный", "150 000,50 ₽", CardSapphire),
-    BankCard("3", "Кредитная", "10 000,00 ₽", CardGraphite)
-)
 
 val mockAds = listOf(
     AdBanner("Кредит наличными", "От 5.5% годовых", AdCreditBg),
@@ -68,9 +41,22 @@ val mockTips = listOf(
 )
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(viewModel: BankViewModel, modifier: Modifier = Modifier) {
+    val cardEntities by viewModel.allCards.collectAsState()
+    
+    // Маппим Entity из базы в UI модель
+    val cards = cardEntities.map { entity ->
+        BankCard(
+            id = entity.id.toString(),
+            name = entity.name,
+            balance = entity.balance.formatBalance(),
+            color = Color(entity.colorHex.toULong().toInt())
+        )
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = Color.Transparent // Фон берется из подложки в MainActivity
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -78,11 +64,26 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 .padding(innerPadding),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { BalanceSection(mockCards) }
+            item { 
+                if (cards.isNotEmpty()) {
+                    BalanceSection(cards) 
+                } else {
+                    // Заглушка пока данные грузятся
+                    Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BankGreen)
+                    }
+                }
+            }
             item { AdsSection(mockAds) }
             item { TipsSection(mockTips) }
         }
     }
+}
+
+// Хелпер для форматирования валюты
+fun Double.formatBalance(): String {
+    val formatter = DecimalFormat("#,###.00 ₽")
+    return formatter.format(this).replace(",", " ")
 }
 
 @Composable
@@ -163,7 +164,7 @@ fun CardItem(card: BankCard) {
 @Composable
 fun ParticleSpoiler(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        val random = java.util.Random(42) // Фиксированный seed для стабильности частиц
+        val random = java.util.Random(42)
         val particleCount = 200
         repeat(particleCount) {
             drawCircle(
@@ -186,10 +187,10 @@ fun AdsSection(ads: List<AdBanner>) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = "Спецпредложения",
-            style = MaterialTheme.typography.titleLarge, // Увеличил шрифт для иерархии
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp),
-            color = BankOnContainerText // Наш темный цвет текста
+            color = BankOnContainerText
         )
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
@@ -204,7 +205,6 @@ fun AdsSection(ads: List<AdBanner>) {
 
 @Composable
 fun AdItem(ad: AdBanner) {
-    // Определяем цвет текста в зависимости от фона (можно сделать умнее, но пока вручную)
     val contentColor = when (ad.color) {
         AdCreditBg -> OnAdCredit
         AdMortgageBg -> OnAdMortgage
@@ -214,11 +214,10 @@ fun AdItem(ad: AdBanner) {
 
     Box(
         modifier = Modifier
-            .width(200.dp) // Чуть шире для лучшей читаемости
+            .width(200.dp)
             .height(100.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(ad.color)
-            .clickable { /* Действие */ }
             .padding(16.dp)
     ) {
         Column(modifier = Modifier.fillMaxHeight()) {
@@ -248,6 +247,7 @@ fun TipsSection(tips: List<Tip>) {
             text = "Советы дня",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
+            color = BankOnContainerText
         )
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -270,20 +270,14 @@ fun TipItem(tip: Tip) {
             Text(
                 text = tip.title,
                 fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
+                color = BankOnBackgroundText
             )
             Text(
                 text = tip.description,
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                color = BankOnBackgroundText.copy(alpha = 0.7f)
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    DiplomNativeTheme {
-        HomeScreen()
     }
 }

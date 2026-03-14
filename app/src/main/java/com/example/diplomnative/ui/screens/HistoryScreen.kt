@@ -6,52 +6,30 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.diplomnative.ui.theme.BankGreen
-import com.example.diplomnative.ui.theme.BankOnBackgroundText
-import com.example.diplomnative.ui.theme.BankScreenBackground
-import com.example.diplomnative.ui.theme.DiplomNativeTheme
-
-data class Transaction(
-    val id: String,
-    val title: String,
-    val category: String,
-    val amount: String,
-    val date: String,
-    val type: TransactionType,
-    val icon: ImageVector
-)
-
-enum class TransactionType {
-    INCOME, EXPENSE
-}
-
-val mockTransactions = listOf(
-    Transaction("1", "Супермаркет 'Магнит'", "Продукты", "- 1 240,00 ₽", "Сегодня, 14:20", TransactionType.EXPENSE, Icons.Default.ShoppingCart),
-    Transaction("2", "Пополнение счета", "Переводы", "+ 50 000,00 ₽", "Сегодня, 10:05", TransactionType.INCOME, Icons.Default.ArrowBack),
-    Transaction("3", "Вкусно и точка", "Кафе и рестораны", "- 650,00 ₽", "Вчера, 19:30", TransactionType.EXPENSE, Icons.Default.ShoppingCart),
-    Transaction("4", "Оплата ЖКХ", "Платежи", "- 4 200,00 ₽", "Вчера, 12:00", TransactionType.EXPENSE, Icons.Filled.Home),
-    Transaction("5", "Перевод Михаилу", "Переводы", "- 1 000,00 ₽", "25 мая, 16:45", TransactionType.EXPENSE, Icons.Default.ArrowForward),
-    Transaction("6", "Зарплата", "Работа", "+ 85 000,00 ₽", "20 мая, 09:00", TransactionType.INCOME, Icons.Default.ArrowBack),
-    Transaction("7", "Яндекс Go", "Транспорт", "- 450,00 ₽", "19 мая, 21:15", TransactionType.EXPENSE, Icons.Default.Info)
-)
+import com.example.diplomnative.data.TransactionEntity
+import com.example.diplomnative.ui.theme.*
+import com.example.diplomnative.ui.viewmodel.BankViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
-fun HistoryScreen(modifier: Modifier = Modifier) {
+fun HistoryScreen(viewModel: BankViewModel, modifier: Modifier = Modifier) {
+    val transactions by viewModel.allTransactions.collectAsState()
+
     Scaffold(
         containerColor = BankScreenBackground,
         modifier = modifier.fillMaxSize()
@@ -69,17 +47,21 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(24.dp)
             )
 
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 24.dp)
-            ) {
-                items(mockTransactions) { transaction ->
-                    TransactionItem(transaction)
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 24.dp),
-                        thickness = 0.5.dp,
-                        color = BankOnBackgroundText.copy(alpha = 0.1f)
-                    )
+            if (transactions.isEmpty()) {
+                EmptyHistoryState()
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    items(transactions) { transaction ->
+                        TransactionItem(transaction)
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                            thickness = 0.5.dp,
+                            color = BankOnBackgroundText.copy(alpha = 0.1f)
+                        )
+                    }
                 }
             }
         }
@@ -87,7 +69,30 @@ fun HistoryScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction) {
+fun EmptyHistoryState() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Default.List,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = BankOnBackgroundText.copy(alpha = 0.2f)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "У вас пока нет операций",
+                style = MaterialTheme.typography.bodyLarge,
+                color = BankOnBackgroundText.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+@Composable
+fun TransactionItem(transaction: TransactionEntity) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -100,7 +105,7 @@ fun TransactionItem(transaction: Transaction) {
                 .size(48.dp)
                 .clip(CircleShape)
                 .background(
-                    if (transaction.type == TransactionType.INCOME) 
+                    if (transaction.isIncome) 
                         BankGreen.copy(alpha = 0.1f) 
                     else 
                         Color.Gray.copy(alpha = 0.1f)
@@ -108,9 +113,9 @@ fun TransactionItem(transaction: Transaction) {
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = transaction.icon,
+                imageVector = getIconForName(transaction.iconName),
                 contentDescription = null,
-                tint = if (transaction.type == TransactionType.INCOME) BankGreen else BankOnBackgroundText,
+                tint = if (transaction.isIncome) BankGreen else BankOnBackgroundText,
                 modifier = Modifier.size(24.dp)
             )
         }
@@ -126,7 +131,7 @@ fun TransactionItem(transaction: Transaction) {
                 color = BankOnBackgroundText
             )
             Text(
-                text = transaction.date,
+                text = transaction.date.formatTimestamp(),
                 style = MaterialTheme.typography.bodySmall,
                 color = BankOnBackgroundText.copy(alpha = 0.6f)
             )
@@ -134,18 +139,29 @@ fun TransactionItem(transaction: Transaction) {
 
         // Сумма
         Text(
-            text = transaction.amount,
+            text = (if (transaction.isIncome) "+ " else "- ") + transaction.amount.formatBalance(),
             style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Bold,
-            color = if (transaction.type == TransactionType.INCOME) BankGreen else BankOnBackgroundText
+            color = if (transaction.isIncome) BankGreen else BankOnBackgroundText
         )
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun HistoryScreenPreview() {
-    DiplomNativeTheme {
-        HistoryScreen()
+private fun Long.formatTimestamp(): String {
+    val date = Date(this)
+    val formatter = SimpleDateFormat("dd MMMM, HH:mm", Locale("ru"))
+    return formatter.format(date)
+}
+
+private fun getIconForName(name: String): ImageVector {
+    return when (name) {
+        "Send" -> Icons.AutoMirrored.Filled.Send
+        "ShoppingCart" -> Icons.Default.ShoppingCart
+        "ArrowBack" -> Icons.AutoMirrored.Filled.ArrowBack
+        "Home" -> Icons.Default.Home
+        "Info" -> Icons.Default.Info
+        "Fastfood" -> Icons.Default.ShoppingCart
+        "Payments" -> Icons.Default.Info
+        else -> Icons.Default.Info
     }
 }
