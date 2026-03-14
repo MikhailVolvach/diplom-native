@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -76,7 +77,7 @@ fun EmptyHistoryState() {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                Icons.Default.List,
+                Icons.AutoMirrored.Filled.List,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = BankOnBackgroundText.copy(alpha = 0.2f)
@@ -149,7 +150,7 @@ fun TransactionItem(transaction: TransactionEntity) {
 
 private fun Long.formatTimestamp(): String {
     val date = Date(this)
-    val formatter = SimpleDateFormat("dd MMMM, HH:mm", Locale("ru"))
+    val formatter = SimpleDateFormat("dd MMMM, HH:mm", Locale.US)
     return formatter.format(date)
 }
 

@@ -28,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.diplomnative.data.BankCardEntity
 import com.example.diplomnative.ui.screens.HistoryScreen
 import com.example.diplomnative.ui.screens.HomeScreen
+import com.example.diplomnative.ui.screens.NotificationScreen
 import com.example.diplomnative.ui.screens.TransferScreen
 import com.example.diplomnative.ui.theme.*
 import com.example.diplomnative.ui.viewmodel.BankViewModel
@@ -42,8 +43,23 @@ class MainActivity : ComponentActivity() {
             val app = context.applicationContext as BankApplication
             
             val bankViewModel: BankViewModel = viewModel(
+//                factory = object : ViewModelProvider.Factory {
+//                    @Suppress("UNCHECKED_CAST")
+//                    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+//                        if (modelClass.isAssignableFrom(BankViewModel::class.java)) {
+//                            return BankViewModel(app.repository) as T
+//                        }
+//                        throw IllegalArgumentException("Unknown ViewModel class")
+//                    }
+//                }
+//                factory = viewModelFactory {
+//                    initializer {
+//                        BankViewModel(app.repository)
+//                    }
+//                }
                 factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                        print(app.repository);
                         return BankViewModel(app.repository) as T
                     }
                 }
@@ -76,46 +92,51 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun DiplomNativeApp(viewModel: BankViewModel) {
     var currentDestination by rememberSaveable { mutableStateOf(AppDestinations.HOME) }
+    var showNotifications by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            GreetingSection()
-        },
-        containerColor = BankScreenBackground,
-    ) { innerPadding ->
-        NavigationSuiteScaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            navigationSuiteItems = {
-                AppDestinations.entries.forEach {
-                    item(
-                        icon = { Icon(it.icon, contentDescription = it.label) },
-                        label = { Text(it.label) },
-                        selected = it == currentDestination,
-                        onClick = { currentDestination = it }
-                    )
-                }
+    if (showNotifications) {
+        NotificationScreen(viewModel = viewModel, onBack = { showNotifications = false })
+    } else {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                GreetingSection(onNotificationsClick = {showNotifications = true})
             },
-            containerColor = Color.Transparent,
-            navigationSuiteColors = NavigationSuiteDefaults.colors(
-                navigationBarContainerColor = Color.Transparent,
-            ),
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = MaterialTheme.colorScheme.background
+            containerColor = BankScreenBackground,
+        ) { innerPadding ->
+            NavigationSuiteScaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                navigationSuiteItems = {
+                    AppDestinations.entries.forEach {
+                        item(
+                            icon = { Icon(it.icon, contentDescription = it.label) },
+                            label = { Text(it.label) },
+                            selected = it == currentDestination,
+                            onClick = { currentDestination = it }
+                        )
+                    }
+                },
+                containerColor = Color.Transparent,
+                navigationSuiteColors = NavigationSuiteDefaults.colors(
+                    navigationBarContainerColor = Color.Transparent,
+                ),
             ) {
-                when (currentDestination) {
-                    AppDestinations.HOME -> HomeScreen(viewModel = viewModel)
-                    AppDestinations.TRANSFER -> TransferScreen(viewModel = viewModel)
-                    AppDestinations.HISTORY -> HistoryScreen(viewModel = viewModel)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    when (currentDestination) {
+                        AppDestinations.HOME -> HomeScreen(viewModel = viewModel)
+                        AppDestinations.TRANSFER -> TransferScreen(viewModel = viewModel)
+                        AppDestinations.HISTORY -> HistoryScreen(viewModel = viewModel)
+                    }
                 }
             }
         }
-    }
+        }
 }
 
 enum class AppDestinations(

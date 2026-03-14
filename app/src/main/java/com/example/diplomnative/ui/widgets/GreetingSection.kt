@@ -23,7 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.example.diplomnative.ui.theme.BankOnBackgroundText
 
 @Composable
-fun GreetingSection() {
+fun GreetingSection(
+    onNotificationsClick: () -> Unit
+) {
     Surface(
         color = MaterialTheme.colorScheme.primary.copy(alpha = 0f),
         modifier = Modifier.fillMaxWidth()
@@ -48,15 +50,15 @@ fun GreetingSection() {
                     color = BankOnBackgroundText.copy(alpha = 0.7f)
                 )
             }
-            IconButton(onClick = { /* TODO: Уведомления */ }) {
+            IconButton(onClick = onNotificationsClick) {
                 Icon(Icons.Default.Notifications, contentDescription = "Уведомления")
             }
         }
     }
 }
 
-@Preview
-@Composable
-fun GreetingSectionPreview() {
-    GreetingSection()
-}
+//@Preview
+//@Composable
+//fun GreetingSectionPreview() {
+//    GreetingSection()
+//}

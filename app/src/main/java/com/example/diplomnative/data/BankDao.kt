@@ -25,4 +25,13 @@ interface BankDao {
 
     @Query("DELETE FROM bank_cards")
     suspend fun deleteAllCards()
+
+    @Query("SELECT * FROM notifications ORDER BY date DESC")
+    fun getAllNotifications(): Flow<List<NotificationEntity>>
+//
+    @Insert
+    suspend fun insertNotification(notification: NotificationEntity)
+//
+//    @Query("UPDATE notifications SET isRead = 1 WHERE id = :id")
+//    suspend fun markAsRead(id: Long)
 }

@@ -11,7 +11,9 @@ class BankApplication : Application() {
             this,
             BankDatabase::class.java,
             "bank_database"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     val repository by lazy {
