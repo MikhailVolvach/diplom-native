@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -23,6 +24,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.diplomnative.R
 import com.example.diplomnative.data.BankCardEntity
 import com.example.diplomnative.ui.theme.*
 import com.example.diplomnative.ui.viewmodel.BankViewModel
@@ -148,7 +150,16 @@ fun TransferScreen(viewModel: BankViewModel, onBack: () -> Unit = {}) {
                             activeContainerColor = BankGreen,
                             activeContentColor = Color.White,
                             inactiveContentColor = BankGreen
-                        )
+                        ),
+                        icon = {
+                            if (transferType == type) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ok),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SegmentedButtonDefaults.IconSize)
+                                )
+                            }
+                        }
                     ) {
                         Text(label)
                     }

@@ -8,10 +8,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -20,8 +16,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModel
@@ -38,9 +34,6 @@ import com.example.diplomnative.ui.widgets.GreetingSection
 import kotlinx.coroutines.flow.collectLatest
 
 class MainActivity : ComponentActivity() {
-    // 1. Активируем Splash Screen перед onCreate
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
 
@@ -94,7 +87,7 @@ fun DiplomNativeApp(viewModel: BankViewModel) {
                 navigationSuiteItems = {
                     AppDestinations.entries.forEach {
                         item(
-                            icon = { Icon(it.icon, contentDescription = it.label) },
+                            icon = { Icon(painter = painterResource(id = it.icon), contentDescription = it.label) },
                             label = { Text(it.label) },
                             selected = it == currentDestination,
                             onClick = { currentDestination = it }
@@ -124,9 +117,9 @@ fun DiplomNativeApp(viewModel: BankViewModel) {
 
 enum class AppDestinations(
     val label: String = "",
-    val icon: ImageVector,
+    val icon: Int,
 ) {
-    HOME("Главная", Icons.Default.Home),
-    TRANSFER("Перевод", Icons.AutoMirrored.Default.Send),
-    HISTORY("История", Icons.AutoMirrored.Filled.List),
+    HOME("Главная", R.drawable.home),
+    TRANSFER("Перевод", R.drawable.send),
+    HISTORY("История", R.drawable.history),
 }
