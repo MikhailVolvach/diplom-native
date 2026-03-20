@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,13 +38,18 @@ import com.example.diplomnative.ui.widgets.GreetingSection
 import kotlinx.coroutines.flow.collectLatest
 
 class MainActivity : ComponentActivity() {
+    // 1. Активируем Splash Screen перед onCreate
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val context = LocalContext.current
             val app = context.applicationContext as BankApplication
-            
+
             val bankViewModel: BankViewModel = viewModel(
                 factory = object : ViewModelProvider.Factory {
                     override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -56,20 +62,6 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 bankViewModel.toastEvent.collectLatest { message ->
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                }
-            }
-
-            // Инициализация данных при первом запуске
-            val cards by bankViewModel.allCards.collectAsState()
-            LaunchedEffect(cards) {
-                if (cards.isEmpty()) {
-                    bankViewModel.initMockData(
-                        listOf(
-                            BankCardEntity(name = "Зарплатная", balance = 45200.0, colorHex = CardRuby.toArgb().toLong()),
-                            BankCardEntity(name = "Сберегательный", balance = 150000.5, colorHex = CardSapphire.toArgb().toLong()),
-                            BankCardEntity(name = "Кредитная", balance = 10000.0, colorHex = CardGraphite.toArgb().toLong())
-                        )
-                    )
                 }
             }
 

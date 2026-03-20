@@ -1,6 +1,7 @@
 package com.example.diplomnative.data
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "bank_cards")
@@ -11,7 +12,10 @@ data class BankCardEntity(
     val colorHex: Long
 )
 
-@Entity(tableName = "transactions")
+@Entity(
+    tableName = "transactions",
+//    indices = [Index(value = ["date"]), Index(value = ["cardId"])]
+)
 data class TransactionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val cardId: Long,
@@ -23,7 +27,10 @@ data class TransactionEntity(
     val iconName: String
 )
 
-@Entity(tableName = "notifications")
+@Entity(
+    tableName = "notifications",
+//    indices = [Index(value = ["date"])]
+)
 data class NotificationEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String,

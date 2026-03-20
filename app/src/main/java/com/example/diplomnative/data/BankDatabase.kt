@@ -32,6 +32,7 @@ abstract class BankDatabase : RoomDatabase() {
                     BankDatabase::class.java,
                     "bank_database"
                 )
+                    .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                     .addCallback(BankDatabaseCallback(scope))
                     .fallbackToDestructiveMigration()
                     .build()
