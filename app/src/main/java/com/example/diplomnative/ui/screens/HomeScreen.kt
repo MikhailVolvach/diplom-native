@@ -1,6 +1,7 @@
 package com.example.diplomnative.ui.screens
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,23 +16,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.diplomnative.R
 import com.example.diplomnative.ui.theme.*
 import com.example.diplomnative.ui.viewmodel.BankViewModel
 import kotlinx.coroutines.delay
 import java.text.DecimalFormat
 
-// UI модели (оставляем для обратной совместимости или маппинга)
 data class BankCard(val id: String, val name: String, val balance: String, val color: Color)
-data class AdBanner(val title: String, val description: String, val color: Color)
+data class AdBanner(val title: String, val description: String, val color: Color, val imageRes: Int? = null)
 data class Tip(val title: String, val description: String)
 
 val mockAds = listOf(
-    AdBanner("Кредит наличными", "От 5.5% годовых", AdCreditBg),
-    AdBanner("Ипотека", "Ставка от 4.7%", AdMortgageBg),
-    AdBanner("Инвестиции", "Начните с 1000₽", AdInvestBg)
+    AdBanner("Кредит наличными", "От 5.5% годовых", AdCreditBg, R.drawable.ad_credit),
+    AdBanner("Ипотека", "Ставка от 4.7%", AdMortgageBg, R.drawable.ad_mortgage)
 )
 
 val mockTips = listOf(
@@ -43,20 +44,21 @@ val mockTips = listOf(
 @Composable
 fun HomeScreen(viewModel: BankViewModel, modifier: Modifier = Modifier) {
     val cardEntities by viewModel.allCards.collectAsState()
-    
-    // Маппим Entity из базы в UI модель
-    val cards = cardEntities.map { entity ->
-        BankCard(
-            id = entity.id.toString(),
-            name = entity.name,
-            balance = entity.balance.formatBalance(),
-            color = Color(entity.colorHex.toULong().toInt())
-        )
+
+    val cards = remember(cardEntities) {
+        cardEntities.map { entity ->
+            BankCard(
+                id = entity.id.toString(),
+                name = entity.name,
+                balance = entity.balance.formatBalance(),
+                color = Color(entity.colorHex.toULong().toInt())
+            )
+        }
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Color.Transparent // Фон берется из подложки в MainActivity
+        containerColor = Color.Transparent 
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -68,7 +70,6 @@ fun HomeScreen(viewModel: BankViewModel, modifier: Modifier = Modifier) {
                 if (cards.isNotEmpty()) {
                     BalanceSection(cards) 
                 } else {
-                    // Заглушка пока данные грузятся
                     Box(Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = BankGreen)
                     }
@@ -80,7 +81,6 @@ fun HomeScreen(viewModel: BankViewModel, modifier: Modifier = Modifier) {
     }
 }
 
-// Хелпер для форматирования валюты
 fun Double.formatBalance(): String {
     val formatter = DecimalFormat("#,###.00 ₽")
     return formatter.format(this).replace(",", " ")
@@ -205,33 +205,47 @@ fun AdsSection(ads: List<AdBanner>) {
 
 @Composable
 fun AdItem(ad: AdBanner) {
-    val contentColor = when (ad.color) {
-        AdCreditBg -> OnAdCredit
-        AdMortgageBg -> OnAdMortgage
-        AdInvestBg -> OnAdInvest
-        else -> Color.Black
-    }
-
     Box(
         modifier = Modifier
-            .width(200.dp)
-            .height(100.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(ad.color)
-            .padding(16.dp)
+            .width(280.dp)
+            .height(140.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { /* TODO */ }
     ) {
-        Column(modifier = Modifier.fillMaxHeight()) {
+        // Фоновое изображение
+        if (ad.imageRes != null) {
+            Image(
+                painter = painterResource(id = ad.imageRes),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            // Затемняющий градиент для читаемости текста
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.3f))
+            )
+        } else {
+            Box(modifier = Modifier.fillMaxSize().background(ad.color))
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp),
+            verticalArrangement = Arrangement.Bottom
+        ) {
             Text(
                 text = ad.title,
                 fontWeight = FontWeight.ExtraBold,
-                style = MaterialTheme.typography.bodyLarge,
-                color = contentColor
+                style = MaterialTheme.typography.titleMedium,
+                color = Color.White
             )
-            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = ad.description,
                 style = MaterialTheme.typography.bodyMedium,
-                color = contentColor.copy(alpha = 0.8f)
+                color = Color.White.copy(alpha = 0.8f)
             )
         }
     }
